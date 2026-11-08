@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#071d2c">
+    <title>Sign in · WaveGuard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="login-page">
+    <main class="login-layout">
+        <section class="login-story">
+            <a class="brand login-brand" href="#" aria-label="WaveGuard"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M4 20c4-5 8 5 12 0s8 5 12 0M4 13c4-5 8 5 12 0s8 5 12 0"/></svg></span><span><strong>WaveGuard</strong><small>LOCAL MONITORING</small></span></a>
+            <div class="story-copy"><p class="eyebrow">LOCAL MONITORING / SIMULATION</p><h1>Clarity for changing water levels.</h1><p>Explore an offline flood-monitoring demonstration built for learning, testing, and local awareness.</p><div class="story-visual" aria-hidden="true"><div class="visual-grid"></div><div class="visual-orbit orbit-one"></div><div class="visual-orbit orbit-two"></div><div class="visual-wave wave-one"></div><div class="visual-wave wave-two"></div><span class="visual-point point-one"></span><span class="visual-point point-two"></span><span class="visual-point point-three"></span><div class="visual-label label-one">ROAD ZONE <b>20 cm</b></div><div class="visual-label label-two">LOCAL SIMULATION</div></div></div>
+            <p class="login-disclaimer">Educational prototype using simulated readings.<br>Not a real flood detection or public warning system.</p>
+        </section>
+        <section class="login-form-side"><div class="login-card"><div class="mobile-brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M4 20c4-5 8 5 12 0s8 5 12 0M4 13c4-5 8 5 12 0s8 5 12 0"/></svg></span></div><p class="eyebrow">YOUR LOCAL WORKSPACE</p><h2>Welcome back</h2><p class="login-subtitle">Sign in to open your WaveGuard dashboard.</p>
+            {% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}<div class="flash-message {{ messages[-1][0] }}" role="alert">{{ messages[-1][1] }}</div>{% endif %}{% endwith %}
+            <form method="post" action="{{ url_for('login', next=request.args.get('next', '')) }}" class="login-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <label for="username">Username</label><input id="username" name="username" type="text" autocomplete="username" maxlength="80" required autofocus>
+                <div class="password-label"><label for="password">Password</label><span>Secure local sign-in</span></div><input id="password" name="password" type="password" autocomplete="current-password" maxlength="256" required>
+                <button type="submit" class="button button-primary login-submit">Sign in <span aria-hidden="true">→</span></button>
+            </form>
+            <p class="login-footnote"><span class="lock-icon" aria-hidden="true">▣</span> Passwords are stored as secure hashes in the local database.</p>
+            <p class="auth-switch">New to WaveGuard? <a href="{{ url_for('signup') }}">Create an account</a></p>
+        </div><footer class="login-legal">WaveGuard <span>·</span> Offline-first monitoring demonstration</footer></section>
+    </main>
+</body>
+</html>

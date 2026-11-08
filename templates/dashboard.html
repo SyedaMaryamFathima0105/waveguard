@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="WaveGuard educational offline-first local flood monitoring simulation">
+    <meta name="theme-color" content="#071d2c">
+    <title>Monitoring overview · WaveGuard</title>
+    <link rel="stylesheet" media="print" onload="this.media='all'" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" aria-label="Main navigation">
+        <a class="brand" href="#overview" aria-label="WaveGuard dashboard">
+            <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M4 20c4-5 8 5 12 0s8 5 12 0M4 13c4-5 8 5 12 0s8 5 12 0"/></svg></span>
+            <span><strong>WaveGuard</strong><small>LOCAL MONITORING</small></span>
+        </a>
+        <div class="nav-caption">WORKSPACE</div>
+        <nav class="side-nav">
+            <a class="nav-link active" href="#overview"><span aria-hidden="true">⌂</span> Overview</a>
+            <a class="nav-link" href="#zones"><span aria-hidden="true">◉</span> Monitoring zones</a>
+            <a class="nav-link" href="#scenario"><span aria-hidden="true">⌁</span> What-if scenario</a>
+            <a class="nav-link" href="#location"><span aria-hidden="true">⌖</span> Location map</a>
+            <a class="nav-link" href="#alerts"><span aria-hidden="true">△</span> Alerts & thresholds</a>
+            <a class="nav-link" href="#history"><span aria-hidden="true">▤</span> Reading history</a>
+        </nav>
+        <div class="sidebar-spacer"></div>
+        <div class="sidebar-note"><span class="pulse-dot"></span><div><strong>Local system</strong><small>Simulation mode</small></div></div>
+        <div class="sidebar-disclaimer">Educational demonstration<br>Not a public warning system</div>
+    </aside>
+
+    <main class="main-area" id="overview">
+        <header class="topbar">
+            <div class="breadcrumb"><span>Workspace</span><b>/</b><strong>Overview</strong></div>
+            <div class="topbar-right">
+                <span class="environment-badge"><i></i> OFFLINE SIMULATION</span>
+                <div class="account"><span class="avatar" aria-hidden="true">{{ username[:1]|upper }}</span><span class="account-name">{{ username }}</span></div>
+                <form action="{{ url_for('logout') }}" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="signout-button" type="submit" aria-label="Sign out">Sign out <span aria-hidden="true">↗</span></button>
+                </form>
+            </div>
+        </header>
+
+        <div class="content-wrap">
+            <section class="page-heading">
+                <div><p class="eyebrow">WAVEGUARD / OPERATIONS</p><h1>Monitoring overview</h1><p class="page-subtitle">A clear view of your simulated local water-level conditions.</p></div>
+                <div class="live-status"><span class="pulse-dot"></span><span id="systemState">System ready</span></div>
+            </section>
+
+            <section class="control-card" aria-labelledby="controls-title">
+                <div class="control-intro"><span class="control-icon" aria-hidden="true">⌁</span><div><h2 id="controls-title">Monitoring controls</h2><p>Choose a zone, then start the local simulation.</p></div></div>
+                <div class="control-actions">
+                    <label class="select-wrap"><span class="sr-only">Select monitoring zone</span><select id="zoneSelect"><option value="Road Zone">Road Zone</option><option value="Underpass Zone">Underpass Zone</option><option value="Drainage Zone">Drainage Zone</option></select><span aria-hidden="true">⌄</span></label>
+                    <button id="startBtn" class="button button-primary" type="button"><span aria-hidden="true">▶</span> Start monitoring</button>
+                    <button id="stopBtn" class="button button-secondary" type="button"><span aria-hidden="true">Ⅱ</span> Stop</button>
+                    <button id="resetBtn" class="button button-quiet" type="button"><span aria-hidden="true">↺</span> Reset</button>
+                </div>
+            </section>
+
+            <section class="panel scenario-panel" id="scenario" aria-labelledby="scenario-title">
+                <div class="panel-heading"><div><p class="eyebrow">INTERACTIVE DEMONSTRATION</p><h2 id="scenario-title">Flood Scenario Simulator</h2><p>Explore how the configured thresholds classify a hypothetical water level.</p></div><span class="scenario-tag">SIMULATED WHAT-IF</span></div>
+                <div class="scenario-layout">
+                    <div class="scenario-controls">
+                        <label for="scenarioZone">Monitoring zone</label>
+                        <select id="scenarioZone" aria-label="Choose a zone for the what-if scenario">
+                            <option value="Road Zone">Road Zone</option><option value="Underpass Zone">Underpass Zone</option><option value="Drainage Zone">Drainage Zone</option>
+                        </select>
+                        <label for="scenarioLevel">Hypothetical water level <output id="scenarioLevelOutput" for="scenarioLevel">20 cm</output></label>
+                        <input id="scenarioLevel" type="range" min="0" max="50" step="1" value="20" aria-describedby="scenarioHelp">
+                        <div class="scenario-scale" aria-hidden="true"><span>0 cm</span><span>Warning 25</span><span>Danger 40</span><span>50 cm</span></div>
+                        <p id="scenarioHelp" class="scenario-help">This isolated control does not change monitoring readings or history.</p>
+                        <button id="resetScenarioBtn" class="button button-secondary" type="button">Reset scenario</button>
+                    </div>
+                    <div class="scenario-result" aria-live="polite" aria-atomic="true">
+                        <span class="scenario-result-label">THRESHOLD RESULT</span>
+                        <div class="scenario-result-line"><strong id="scenarioStatus" class="status-normal">NORMAL</strong><span id="scenarioZoneName">Road Zone</span></div>
+                        <p id="scenarioExplanation">20 cm is below the 25 cm warning threshold.</p>
+                        <div class="scenario-track" aria-hidden="true"><span id="scenarioBar" style="width:40%"></span></div>
+                        <p class="scenario-disclaimer">Illustrative simulation only. It does not measure or predict actual flood conditions.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel location-panel" id="location" aria-labelledby="location-title">
+                <div class="panel-heading"><div><p class="eyebrow">PLACE EXPLORER</p><h2 id="location-title">Select a location</h2><p>Map selection is separate from the simulated monitoring zones.</p></div><span class="location-source">OpenStreetMap · Nominatim</span></div>
+                <div class="location-tools">
+                    <form id="placeSearchForm" class="place-search" role="search"><label class="sr-only" for="placeSearch">Search a place or address</label><input id="placeSearch" type="search" maxlength="160" placeholder="Search a place or address" autocomplete="off"><button class="button button-primary" type="submit">Search</button></form>
+                    <button id="locateMeBtn" class="button button-secondary" type="button">Use my location</button>
+                    <div class="coordinate-inputs"><label>Latitude<input id="latitudeInput" type="number" min="-90" max="90" step="any" placeholder="e.g. 19.0760"></label><label>Longitude<input id="longitudeInput" type="number" min="-180" max="180" step="any" placeholder="e.g. 72.8777"></label><button id="setCoordinatesBtn" class="button button-secondary" type="button">Set coordinates</button></div>
+                </div>
+                <p id="mapMessage" class="map-message" role="status" aria-live="polite">Loading map. Search or select a point to begin.</p>
+                <div id="locationMap" class="location-map" role="application" aria-label="Interactive map. Click to select a location or drag the marker."></div>
+                <div class="assessment-card" aria-live="polite"><div><span class="assessment-label">LOCATION ASSESSMENT</span><h3 id="selectedLocationName">No location selected</h3><p id="selectedCoordinates">Select a point on the map or enter coordinates.</p></div><div class="assessment-status" id="riskStatus">Flood risk data unavailable</div><p class="assessment-explanation" id="riskExplanation">A coordinate alone cannot establish flood conditions. Location-specific assessment needs a configured official flood or water-level data source.</p></div>
+            </section>
+
+            <section id="zones" class="section-block" aria-labelledby="zones-title">
+                <div class="section-title-row"><div><p class="eyebrow">CURRENT CONDITIONS</p><h2 id="zones-title">Monitoring zones</h2></div><span class="section-meta">3 simulation zones</span></div>
+                <div class="zone-grid">
+                    <article class="zone-card selected" data-zone-card="Road Zone" role="button" tabindex="0" aria-pressed="true"><div class="zone-card-top"><span class="zone-icon">R</span><span class="zone-status status-normal" data-zone-status="Road Zone">NORMAL</span></div><h3>Road Zone</h3><p class="zone-location">LOCAL SIMULATION AREA</p><div class="zone-reading"><strong data-zone-level="Road Zone">20</strong><span>cm</span></div><div class="level-track"><span data-zone-bar="Road Zone" style="width:40%"></span></div><div class="zone-card-foot"><span>Water level</span><span>Max 50 cm</span></div></article>
+                    <article class="zone-card" data-zone-card="Underpass Zone" role="button" tabindex="0" aria-pressed="false"><div class="zone-card-top"><span class="zone-icon blue">U</span><span class="zone-status status-normal" data-zone-status="Underpass Zone">NORMAL</span></div><h3>Underpass Zone</h3><p class="zone-location">LOCAL SIMULATION AREA</p><div class="zone-reading"><strong data-zone-level="Underpass Zone">15</strong><span>cm</span></div><div class="level-track"><span data-zone-bar="Underpass Zone" style="width:30%"></span></div><div class="zone-card-foot"><span>Water level</span><span>Max 50 cm</span></div></article>
+                    <article class="zone-card" data-zone-card="Drainage Zone" role="button" tabindex="0" aria-pressed="false"><div class="zone-card-top"><span class="zone-icon amber">D</span><span class="zone-status status-normal" data-zone-status="Drainage Zone">NORMAL</span></div><h3>Drainage Zone</h3><p class="zone-location">LOCAL SIMULATION AREA</p><div class="zone-reading"><strong data-zone-level="Drainage Zone">10</strong><span>cm</span></div><div class="level-track"><span data-zone-bar="Drainage Zone" style="width:20%"></span></div><div class="zone-card-foot"><span>Water level</span><span>Max 50 cm</span></div></article>
+                </div>
+            </section>
+
+            <section class="metrics-grid" aria-label="Selected zone readings">
+                <article class="metric-card"><div class="metric-top"><span>SELECTED ZONE</span><span id="statusText" class="status-normal">NORMAL</span></div><h3 id="zoneName">Road Zone</h3><p>Current monitoring area</p></article>
+                <article class="metric-card"><div class="metric-top"><span>WATER LEVEL</span><span class="metric-symbol">≈</span></div><h3><span id="waterLevel">20</span><small> cm</small></h3><p>Simulated water level</p></article>
+                <article class="metric-card"><div class="metric-top"><span>RATE OF CHANGE</span><span class="metric-symbol">↗</span></div><h3><span id="rateValue">0</span><small> cm / interval</small></h3><p>Since the previous reading</p></article>
+                <article class="metric-card"><div class="metric-top"><span>READING RELIABILITY</span><span class="metric-symbol">✓</span></div><h3 id="reliabilityStatus" class="status-normal">VALID</h3><p id="reliabilityMessage">Waiting for validation.</p></article>
+            </section>
+
+            <div class="content-grid">
+                <section class="panel chart-panel" aria-labelledby="chart-title">
+                    <div class="panel-heading"><div><p class="eyebrow">SELECTED ZONE</p><h2 id="chart-title">Water-level trend</h2><p>Reading history for the selected monitoring zone.</p></div><span class="chart-key"><i></i> Water level (cm)</span></div>
+                    <div class="graph-container"><canvas id="simulationCanvas" aria-label="Water-level trend graph. Dashed lines show warning and danger thresholds.">Your browser does not support the graph canvas.</canvas></div>
+                    <div class="chart-foot"><span>Last updated <strong id="lastUpdated">Waiting</strong></span><span class="threshold-key"><i class="warning-key"></i> Warning 25 cm <i class="danger-key"></i> Danger 40 cm</span></div>
+                </section>
+                <section id="alerts" class="panel alert-panel" aria-labelledby="alert-heading">
+                    <div class="panel-heading compact"><div><p class="eyebrow">SYSTEM MESSAGES</p><h2 id="alert-heading">Alerts & thresholds</h2></div><span class="alert-count">2 LEVELS</span></div>
+                    <div class="alert-card" id="alertBox"><div class="alert-symbol" aria-hidden="true">!</div><div><h3 id="alertTitle">System ready</h3><p id="alertMessage">Start monitoring to begin the water-level simulation.</p></div></div>
+                    <div class="threshold-row"><span class="threshold-mark warning-mark"></span><div><strong>Warning level</strong><small>25 cm and above</small></div><span class="threshold-value">25 cm</span></div>
+                    <div class="threshold-row"><span class="threshold-mark danger-mark"></span><div><strong>Danger level</strong><small>40 cm and above</small></div><span class="threshold-value">40 cm</span></div>
+                </section>
+            </div>
+
+            <section id="history" class="panel history-panel" aria-labelledby="history-title">
+                <div class="panel-heading history-heading"><div><p class="eyebrow">SESSION RECORD</p><h2 id="history-title">Monitoring history</h2><p>Recent simulated readings from this browser session.</p></div><span class="history-cap">UP TO 50 READINGS</span></div>
+                <div class="table-container"><table><thead><tr><th scope="col">Time</th><th scope="col">Monitoring zone</th><th scope="col">Water level</th><th scope="col">Status</th></tr></thead><tbody id="historyTableBody"><tr><td colspan="4" class="empty-history">No readings yet. Start monitoring to record readings.</td></tr></tbody></table></div>
+            </section>
+            <footer class="footer"><span>WaveGuard <i>·</i> Offline-first local flood monitoring system</span><span>Educational prototype using simulated readings. Not a real flood detection or public warning system.</span></footer>
+
+
+        </div>
+    </main>
+</div>
+<script defer src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script async id="leafletScript" src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+</body>
+</html>
